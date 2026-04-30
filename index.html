@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shoe Store - Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -18,8 +22,33 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <h1>Welcome to the Shoe Store</h1>
-    <p>Find the best shoes for every occasion!</p>
-    <a href="product.html">Shop Now</a>
+    <nav class="navbar">
+        <div class="navbar__inner">
+            <a href="index.html" class="navbar__logo">👟 <span>Stride</span>Store</a>
+            <ul class="navbar__links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="product.html">Shop</a></li>
+                <li><a href="checkout.html">Cart</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero__badge">New Collection 2025</div>
+        <h1 class="hero__title">Step Into<br><span>Your Best Run</span></h1>
+        <p class="hero__subtitle">Premium running shoes engineered for performance, comfort, and style.</p>
+        <div class="hero__image-wrap">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80"
+                 alt="Premium running shoes" loading="lazy">
+        </div>
+        <div class="hero__actions">
+            <a href="product.html" class="btn btn--primary btn--large">Shop Now</a>
+            <a href="product.html" class="btn btn--outline btn--large">View Collection</a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        &copy; 2025 StrideStore &mdash; Demo site for GA4 testing
+    </footer>
 </body>
 </html>

@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shoe Store - Product</title>
+    <title>Shoe Store - Running Shoes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -18,11 +22,57 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <h1>Product Page</h1>
-    <p>Product: Running Shoes</p>
-    <p>Price: $100</p>
-    <button onclick="addToCart()">Add to Cart</button>
-    <a href="checkout.html">Go to Checkout</a>
+    <nav class="navbar">
+        <div class="navbar__inner">
+            <a href="index.html" class="navbar__logo">👟 <span>Stride</span>Store</a>
+            <ul class="navbar__links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="product.html">Shop</a></li>
+                <li><a href="checkout.html">Cart</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        <p class="breadcrumb"><a href="index.html">Home</a> / Running Shoes</p>
+
+        <div class="product">
+            <div class="product__image-wrap">
+                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=700&q=80"
+                     alt="Running Shoes" loading="lazy">
+            </div>
+            <div class="product__info">
+                <p class="product__category">Performance Running</p>
+                <h1 class="product__name">ProRun Elite Running Shoes</h1>
+                <div class="product__rating">
+                    <span class="stars">★★★★★</span>
+                    <span>4.8 (128 reviews)</span>
+                </div>
+                <div class="product__price">
+                    $100
+                    <span class="original">$130</span>
+                </div>
+                <hr class="product__divider">
+                <p class="product__description">
+                    Engineered for the road ahead. These lightweight running shoes feature
+                    responsive cushioning, a breathable mesh upper, and a durable outsole
+                    designed to go the distance — mile after mile.
+                </p>
+                <div class="product__actions">
+                    <button class="btn btn--primary btn--large" onclick="addToCart()">
+                        🛒 Add to Cart
+                    </button>
+                    <a href="checkout.html" class="btn btn--outline">
+                        Buy Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        &copy; 2025 StrideStore &mdash; Demo site for GA4 testing
+    </footer>
 
     <script>
         window.dataLayer = window.dataLayer || [];
