@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shoe Store - Thank You</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -18,8 +22,46 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <h1>Thank You for Your Purchase!</h1>
-    <p>Your order has been placed successfully.</p>
-    <a href="index.html">Return to Home</a>
+    <nav class="navbar">
+        <div class="navbar__inner">
+            <a href="index.html" class="navbar__logo">👟 <span>Stride</span>Store</a>
+            <ul class="navbar__links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="product.html">Shop</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="thankyou">
+        <div class="thankyou__icon">✓</div>
+        <h1 class="thankyou__title">Order Confirmed!</h1>
+        <p class="thankyou__subtitle">Thank you for your purchase. Your shoes are on their way!</p>
+
+        <div class="thankyou__details">
+            <h3>Order Details</h3>
+            <div class="thankyou__detail-row">
+                <span>Product</span>
+                <strong>ProRun Elite Running Shoes</strong>
+            </div>
+            <div class="thankyou__detail-row">
+                <span>Quantity</span>
+                <strong>1</strong>
+            </div>
+            <div class="thankyou__detail-row">
+                <span>Total Paid</span>
+                <strong>$100.00</strong>
+            </div>
+            <div class="thankyou__detail-row">
+                <span>Shipping</span>
+                <strong>Free — 3-5 business days</strong>
+            </div>
+        </div>
+
+        <a href="index.html" class="btn btn--primary btn--large">Continue Shopping</a>
+    </div>
+
+    <footer class="footer">
+        &copy; 2025 StrideStore &mdash; Demo site for GA4 testing
+    </footer>
 </body>
 </html>
