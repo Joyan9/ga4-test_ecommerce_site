@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Store - Checkout</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WPWB25ZW');</script>
+    <!-- End Google Tag Manager -->
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WPWB25ZW"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <h1>Checkout Page</h1>
+    <form onsubmit="submitOrder(event)">
+        <label for="card">Enter Test Card Number:</label>
+        <input type="text" id="card" placeholder="4242 4242 4242 4242" required>
+        <button type="submit">Purchase</button>
+    </form>
+
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function submitOrder(event) {
+            event.preventDefault();
+            var transactionId = 'T' + Date.now();
+            dataLayer.push({
+                'event': 'purchase',
+                'ecommerce': {
+                    'transaction_id': transactionId,
+                    'value': 100,
+                    'currency': 'USD',
+                    'items': [{
+                        'item_name': 'Running Shoes',
+                        'price': 100,
+                        'quantity': 1
+                    }]
+                }
+            });
+            alert('Purchase successful!');
+            window.location.href = 'thankyou.html';
+        }
+    </script>
+</body>
+</html>

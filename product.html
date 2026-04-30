@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Store - Product</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WPWB25ZW');</script>
+    <!-- End Google Tag Manager -->
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WPWB25ZW"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <h1>Product Page</h1>
+    <p>Product: Running Shoes</p>
+    <p>Price: $100</p>
+    <button onclick="addToCart()">Add to Cart</button>
+    <a href="checkout.html">Go to Checkout</a>
+
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function addToCart() {
+            dataLayer.push({
+                'event': 'add_to_cart',
+                'ecommerce': {
+                    'items': [{
+                        'item_name': 'Running Shoes',
+                        'price': 100,
+                        'quantity': 1
+                    }]
+                }
+            });
+            alert('Item added to cart!');
+        }
+    </script>
+</body>
+</html>
