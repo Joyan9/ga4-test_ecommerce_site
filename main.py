@@ -30,12 +30,19 @@ def _write_summary(summary: dict, stamp: str) -> Path:
 
 def _write_events_csv(rows: list[dict], stamp: str) -> Path:
     path = _output_dir() / f"events_{stamp}.csv"
-    fieldnames = ["client_id", "session_id", "event_name", "timestamp_micros", "event_date", "traffic_source", "device_category", "geo_country", "transaction_id", "revenue"]
+    fieldnames = ["client_id", "session_id", "event_name", "timestamp_micros", "event_date", "traffic_source", "device_category", "geo_country", "transaction_id", "revenue", "items"]
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
-            writer.writerow({key: row.get(key, "") for key in fieldnames})
+            # serialize items as JSON if present
+            out = {key: row.get(key, "") for key in fieldnames}
+            if "items" in row and row.get("items"):
+                try:
+                    out["items"] = json.dumps(row.get("items"), ensure_ascii=False)
+                except Exception:
+                    out["items"] = str(row.get("items"))
+            writer.writerow(out)
     return path
 
 
@@ -129,9 +136,9 @@ def daily(date: str | None = None, dry_run: bool = True):
         sent = 0
         rows: list[dict] = []
         payloads: list[dict] = []
-        for u in users:
-            sess = make_session_for_user(1)
-            events = build_simple_journey(sess, catalog, cfg.raw, seed=789)
+        for i, u in enumerate(users):
+            sess = make_session_for_user(1, seed=hash(u.client_id) % 100000)
+            events = build_simple_journey(sess, catalog, cfg.raw, seed=hash(u.client_id) % 100000 + i)
             if not events:
                 continue
             evs = []
@@ -140,17 +147,28 @@ def daily(date: str | None = None, dry_run: bool = True):
             payload = build_event_payload(client_id=u.client_id, user_id=u.user_id, events=evs, timestamp_micros=events[0].timestamp_micros)
             payloads.append(payload)
             for e in events:
+                # derive traffic source string from user's acquisition_source if available
+                tsrc = ""
+                if getattr(u, "acquisition_source", None):
+                    ac = u.acquisition_source
+                    tsrc = f"{ac.medium} / {ac.source}"
+                    if ac.campaign:
+                        tsrc = f"{tsrc} (campaign: {ac.campaign})"
+                else:
+                    tsrc = "organic / google"
+
                 rows.append({
                     "client_id": u.client_id,
                     "session_id": sess.session_id,
                     "event_name": e.name,
                     "timestamp_micros": e.timestamp_micros,
                     "event_date": target_date.isoformat(),
-                    "traffic_source": "organic / google",
+                    "traffic_source": tsrc,
                     "device_category": u.device.category,
                     "geo_country": u.geo.country_code,
                     "transaction_id": e.params.get("transaction_id", ""),
                     "revenue": e.params.get("value", 0),
+                    "items": e.params.get("items", []),
                 })
             if dry_run or cfg.raw.get("sending", {}).get("dry_run", True):
                 print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -211,9 +229,9 @@ def historical(start: str | None = None, end: str | None = None, dry_run: bool =
             std = cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_std", 18)
             users_n = int(max(cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_min", 40), min(cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_max", 160), int(random.gauss(mean, std)))))
             users = generate_users(users_n, cfg.raw, seed=int(current.strftime("%Y%m%d")))
-            for u in users:
-                sess = make_session_for_user(1, base_ts_s=int(datetime.combine(current, datetime.min.time()).timestamp()))
-                events = build_simple_journey(sess, catalog, cfg.raw, seed=int(current.strftime("%Y%m%d")))
+            for i, u in enumerate(users):
+                sess = make_session_for_user(1, base_ts_s=int(datetime.combine(current, datetime.min.time()).timestamp()), seed=hash(u.client_id) % 100000)
+                events = build_simple_journey(sess, catalog, cfg.raw, seed=hash(u.client_id) % 100000 + i)
                 if not events:
                     continue
                 payload = build_event_payload(client_id=u.client_id, user_id=u.user_id, events=[{"name": e.name, "params": e.params} for e in events], timestamp_micros=events[0].timestamp_micros)
