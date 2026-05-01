@@ -1,0 +1,115 @@
+simulation:
+  currency: "EUR"
+  new_to_returning_ratio: 0.75
+
+  daily:
+    users_per_day_mean: 85
+    users_per_day_std: 18
+    users_per_day_min: 40
+    users_per_day_max: 160
+    weekday_multipliers: [1.10, 1.15, 1.10, 1.05, 1.00, 0.80, 0.70]
+
+  historical:
+    start: "2025-01-01"
+    end: "2025-03-31"
+
+store:
+  name: "DemoShop"
+  categories:
+    - name: "Electronics"
+      weight: 0.35
+      price_range: [29.99, 499.99]
+    - name: "Clothing"
+      weight: 0.30
+      price_range: [9.99, 149.99]
+    - name: "Home & Living"
+      weight: 0.20
+      price_range: [14.99, 299.99]
+    - name: "Books"
+      weight: 0.15
+      price_range: [7.99, 39.99]
+
+funnel:
+  page_view_to_view_item: 0.55
+  view_item_to_add_to_cart: 0.28
+  add_to_cart_to_begin_checkout: 0.55
+  begin_checkout_to_purchase: 0.60
+  view_item_list_probability: 0.65
+  search_probability: 0.30
+  multi_item_basket_probability: 0.25
+  refund_rate: 0.02
+
+traffic_sources:
+  - medium: organic
+    source: google
+    weight: 0.35
+  - medium: organic
+    source: bing
+    weight: 0.05
+  - medium: cpc
+    source: google
+    campaign: "brand_search"
+    weight: 0.15
+  - medium: cpc
+    source: google
+    campaign: "category_shopping"
+    weight: 0.10
+  - medium: email
+    source: newsletter
+    campaign: "weekly_digest"
+    weight: 0.10
+  - medium: social
+    source: instagram
+    weight: 0.08
+  - medium: social
+    source: facebook
+    weight: 0.07
+  - medium: "(none)"
+    source: "(direct)"
+    weight: 0.10
+
+device_mix:
+  - category: mobile
+    os: Android
+    browser: Chrome
+    weight: 0.38
+  - category: mobile
+    os: iOS
+    browser: Safari
+    weight: 0.25
+  - category: desktop
+    os: Windows
+    browser: Chrome
+    weight: 0.20
+  - category: desktop
+    os: macOS
+    browser: Safari
+    weight: 0.10
+  - category: desktop
+    os: Windows
+    browser: Edge
+    weight: 0.04
+  - category: tablet
+    os: iOS
+    browser: Safari
+    weight: 0.03
+
+geo_mix:
+  - country: Germany
+    country_code: DE
+    weight: 0.55
+  - country: Austria
+    country_code: AT
+    weight: 0.20
+  - country: Switzerland
+    country_code: CH
+    weight: 0.15
+  - country: Netherlands
+    country_code: NL
+    weight: 0.10
+
+sending:
+  batch_size: 20
+  requests_per_second: 5
+  dry_run: false
+  use_debug_endpoint: false
