@@ -129,7 +129,7 @@ def daily(date: str | None = None, dry_run: bool = True):
         sent = 0
         rows: list[dict] = []
         payloads: list[dict] = []
-        for u in users[:20]:
+        for u in users:
             sess = make_session_for_user(1)
             events = build_simple_journey(sess, catalog, cfg.raw, seed=789)
             if not events:
@@ -210,7 +210,7 @@ def historical(start: str | None = None, end: str | None = None, dry_run: bool =
             mean = cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_mean", 85)
             std = cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_std", 18)
             users_n = int(max(cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_min", 40), min(cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_max", 160), int(random.gauss(mean, std)))))
-            users = generate_users(max(1, users_n // 10), cfg.raw, seed=int(current.strftime("%Y%m%d")))
+            users = generate_users(users_n, cfg.raw, seed=int(current.strftime("%Y%m%d")))
             for u in users:
                 sess = make_session_for_user(1, base_ts_s=int(datetime.combine(current, datetime.min.time()).timestamp()))
                 events = build_simple_journey(sess, catalog, cfg.raw, seed=int(current.strftime("%Y%m%d")))
