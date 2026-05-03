@@ -24,12 +24,37 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(len(users), 4)
         self.assertTrue(all("." in u.client_id for u in users))
 
-    def test_journey_contains_page_view(self):
+    def test_journey_starts_with_session_start(self):
         catalog = build_catalog(self.config, seed=7, n=3)
         session = make_session_for_user(1, base_ts_s=1_700_000_000, seed=2)
         events = build_simple_journey(session, catalog, self.config, seed=11)
-        self.assertGreaterEqual(len(events), 1)
-        self.assertEqual(events[0].name, "page_view")
+        self.assertGreaterEqual(len(events), 2)
+        self.assertEqual(events[0].name, "session_start")
+        self.assertEqual(events[1].name, "page_view")
+
+    def test_session_start_has_correct_params(self):
+        catalog = build_catalog(self.config, seed=7, n=3)
+        session = make_session_for_user(1, base_ts_s=1_700_000_000, seed=2)
+        events = build_simple_journey(session, catalog, self.config, seed=11)
+        session_start_event = events[0]
+        page_view_event = events[1]
+        
+        # session_start should be first and at session start timestamp
+        self.assertEqual(session_start_event.name, "session_start")
+        self.assertEqual(session_start_event.timestamp_micros, session.start_timestamp_us)
+        
+        # session_start params should include session_id and session_number
+        self.assertEqual(session_start_event.params["session_id"], session.session_id)
+        self.assertEqual(session_start_event.params["session_number"], session.session_number)
+        self.assertIn("language", session_start_event.params)
+        self.assertIn("page_location", session_start_event.params)
+        self.assertIn("page_title", session_start_event.params)
+        
+        # page_view should follow and have same session attributes
+        self.assertEqual(page_view_event.name, "page_view")
+        self.assertEqual(page_view_event.timestamp_micros, session.start_timestamp_us)
+        self.assertEqual(page_view_event.params["session_id"], session_start_event.params["session_id"])
+        self.assertEqual(page_view_event.params["session_number"], session_start_event.params["session_number"])
 
 
 if __name__ == "__main__":

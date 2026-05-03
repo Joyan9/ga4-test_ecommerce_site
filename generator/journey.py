@@ -8,6 +8,16 @@ def build_simple_journey(session: Session, products: List[Dict[str, Any]], confi
     rng = random.Random(seed + session.session_number)
     events: List[Event] = []
     ts = session.start_timestamp_us
+    # session_start (session initialization)
+    session_start_params = {
+        "session_id": session.session_id,
+        "session_number": session.session_number,
+        "engagement_time_msec": max(100, session.engagement_time_msec // 4),
+        "language": "de-de",
+        "page_location": "https://demoshop.example.com/",
+        "page_title": "Homepage",
+    }
+    events.append(Event(name="session_start", timestamp_micros=ts, params=session_start_params))
     # page_view (homepage)
     params = {
         "session_id": session.session_id,
