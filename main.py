@@ -52,6 +52,18 @@ def _resolve_target_date(date_value: str | None) -> date_type:
     return datetime.utcnow().date()
 
 
+def _event_dicts(events, debug_view: bool = False):
+    payload_events = []
+    for event in events:
+        if event.name == "session_start":
+            continue
+        params = dict(event.params)
+        if debug_view:
+            params["debug_mode"] = 1
+        payload_events.append({"name": event.name, "params": params})
+    return payload_events
+
+
 @app.command()
 def validate_config(config: str = "config.yaml"):
     """Validate config.yaml and required environment variables."""
@@ -102,11 +114,11 @@ def preview(count: int = 3):
 
 
 @app.command()
-def daily(date: str | None = None, dry_run: bool = True):
+def daily(date: str | None = None, dry_run: bool = True, debug_view: bool = False):
     """Generate & send a single day's synthetic traffic (stub)."""
     logger = setup_logger()
     target_date = _resolve_target_date(date)
-    logger.info("Starting daily run for date={} dry_run={}", str(target_date), dry_run)
+    logger.info("Starting daily run for date={} dry_run={} debug_view={}", str(target_date), dry_run, debug_view)
     try:
         cfg = load_config()
     except Exception as e:
@@ -123,6 +135,27 @@ def daily(date: str | None = None, dry_run: bool = True):
     import random
 
     catalog = build_catalog(cfg.raw, seed=123, n=50)
+    effective_dry_run = dry_run or cfg.raw.get("sending", {}).get("dry_run", True)
+    configured_debug_view = cfg.raw.get("sending", {}).get("debug_view", False)
+    effective_debug_view = debug_view or configured_debug_view
+    debug_endpoint_enabled = cfg.raw.get("sending", {}).get("use_debug_endpoint", False)
+    logger.info(
+        "Daily run config: users_per_day=[{}..{}], rps={}, use_debug_endpoint={}, debug_view={}, configured_debug_view={}, effective_debug_view={}, effective_dry_run={}",
+        cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_min", 40),
+        cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_max", 160),
+        cfg.raw.get("sending", {}).get("requests_per_second", 5),
+        debug_endpoint_enabled,
+        debug_view,
+        configured_debug_view,
+        effective_debug_view,
+        effective_dry_run,
+    )
+    if effective_debug_view and effective_dry_run:
+        logger.warning("debug_view is enabled, but dry_run prevents events from reaching GA4 DebugView")
+    if effective_debug_view and debug_endpoint_enabled:
+        logger.warning("Both debug_view and use_debug_endpoint are enabled; DebugView requires the live collect endpoint")
+    if not effective_debug_view and not effective_dry_run:
+        logger.warning("Live send is enabled without debug_view; events will not appear in GA4 DebugView")
 
     # sample user count (simple gaussian clipped)
     mean = cfg.raw.get("simulation", {}).get("daily", {}).get("users_per_day_mean", 85)
@@ -140,12 +173,29 @@ def daily(date: str | None = None, dry_run: bool = True):
             sess = make_session_for_user(1, seed=hash(u.client_id) % 100000)
             events = build_simple_journey(sess, catalog, cfg.raw, seed=hash(u.client_id) % 100000 + i)
             if not events:
+                logger.warning("Skipping user {} because no events were generated", u.client_id)
                 continue
-            evs = []
-            for e in events:
-                evs.append({"name": e.name, "params": e.params})
+            evs = _event_dicts(events, debug_view=effective_debug_view)
+            if len(evs) != len(events):
+                logger.warning(
+                    "Filtered reserved GA4 event names from payload client_id={} session_id={} original_events={} outbound_events={}",
+                    u.client_id,
+                    sess.session_id,
+                    len(events),
+                    len(evs),
+                )
             payload = build_event_payload(client_id=u.client_id, user_id=u.user_id, events=evs, timestamp_micros=events[0].timestamp_micros)
             payloads.append(payload)
+            if i < 3:
+                logger.info(
+                    "Prepared payload {} for client_id={} session_id={} event_count={} first_event={} event_names={}",
+                    i + 1,
+                    u.client_id,
+                    sess.session_id,
+                    len(events),
+                    events[0].name,
+                    [event.name for event in events[:5]],
+                )
             for e in events:
                 # derive traffic source string from user's acquisition_source if available
                 tsrc = ""
@@ -170,11 +220,32 @@ def daily(date: str | None = None, dry_run: bool = True):
                     "revenue": e.params.get("value", 0),
                     "items": e.params.get("items", []),
                 })
-            if dry_run or cfg.raw.get("sending", {}).get("dry_run", True):
+            if effective_dry_run:
+                logger.info(
+                    "Dry-run payload summary client_id={} session_id={} events={} first_event={}",
+                    u.client_id,
+                    sess.session_id,
+                    len(events),
+                    events[0].name,
+                )
                 print(json.dumps(payload, indent=2, ensure_ascii=False))
             else:
                 resp = await client.send(payload)
-                print(f"sent: {resp.status_code}")
+                logger.info(
+                    "Sent payload client_id={} session_id={} status_code={} endpoint={}",
+                    u.client_id,
+                    sess.session_id,
+                    resp.status_code,
+                    client._endpoint(),
+                )
+                if resp.status_code >= 400:
+                    logger.error(
+                        "GA4 returned error for client_id={} session_id={} status_code={} body={}",
+                        u.client_id,
+                        sess.session_id,
+                        resp.status_code,
+                        resp.text,
+                    )
             sent += 1
         await client.close()
         stamp = _run_stamp()
@@ -196,7 +267,7 @@ def daily(date: str | None = None, dry_run: bool = True):
 
 
 @app.command()
-def historical(start: str | None = None, end: str | None = None, dry_run: bool = True):
+def historical(start: str | None = None, end: str | None = None, dry_run: bool = True, debug_view: bool = False):
     """Backfill historical range (stub)."""
     logger = setup_logger()
     try:
@@ -207,7 +278,7 @@ def historical(start: str | None = None, end: str | None = None, dry_run: bool =
 
     start_date = datetime.fromisoformat(start or cfg.raw.get("simulation", {}).get("historical", {}).get("start", "2025-01-01")).date()
     end_date = datetime.fromisoformat(end or cfg.raw.get("simulation", {}).get("historical", {}).get("end", "2025-01-01")).date()
-    logger.info("Starting historical run start={} end={} dry_run={}", str(start_date), str(end_date), dry_run)
+    logger.info("Starting historical run start={} end={} dry_run={} debug_view={}", str(start_date), str(end_date), dry_run, debug_view)
 
     from generator.products import build_catalog
     from generator.population import generate_users
@@ -220,6 +291,25 @@ def historical(start: str | None = None, end: str | None = None, dry_run: bool =
     catalog = build_catalog(cfg.raw, seed=123, n=50)
     rows: list[dict] = []
     stamp = _run_stamp()
+    effective_dry_run = dry_run or cfg.raw.get("sending", {}).get("dry_run", True)
+    configured_debug_view = cfg.raw.get("sending", {}).get("debug_view", False)
+    effective_debug_view = debug_view or configured_debug_view
+    debug_endpoint_enabled = cfg.raw.get("sending", {}).get("use_debug_endpoint", False)
+    logger.info(
+        "Historical run config: rps={}, use_debug_endpoint={}, debug_view={}, configured_debug_view={}, effective_debug_view={}, effective_dry_run={}",
+        cfg.raw.get("sending", {}).get("requests_per_second", 5),
+        debug_endpoint_enabled,
+        debug_view,
+        configured_debug_view,
+        effective_debug_view,
+        effective_dry_run,
+    )
+    if effective_debug_view and effective_dry_run:
+        logger.warning("debug_view is enabled, but dry_run prevents events from reaching GA4 DebugView")
+    if effective_debug_view and debug_endpoint_enabled:
+        logger.warning("Both debug_view and use_debug_endpoint are enabled; DebugView requires the live collect endpoint")
+    if not effective_debug_view and not effective_dry_run:
+        logger.warning("Live send is enabled without debug_view; events will not appear in GA4 DebugView")
     async def run_send():
         client = MPClient(cfg.env.measurement_id, cfg.env.api_secret, rps=cfg.raw.get("sending", {}).get("requests_per_second", 5), use_debug=cfg.raw.get("sending", {}).get("use_debug_endpoint", False))
         sent = 0
@@ -233,12 +323,56 @@ def historical(start: str | None = None, end: str | None = None, dry_run: bool =
                 sess = make_session_for_user(1, base_ts_s=int(datetime.combine(current, datetime.min.time()).timestamp()), seed=hash(u.client_id) % 100000)
                 events = build_simple_journey(sess, catalog, cfg.raw, seed=hash(u.client_id) % 100000 + i)
                 if not events:
+                    logger.warning("Skipping user {} on {} because no events were generated", u.client_id, current.isoformat())
                     continue
-                payload = build_event_payload(client_id=u.client_id, user_id=u.user_id, events=[{"name": e.name, "params": e.params} for e in events], timestamp_micros=events[0].timestamp_micros)
-                if dry_run or cfg.raw.get("sending", {}).get("dry_run", True):
-                    pass
+                evs = _event_dicts(events, debug_view=effective_debug_view)
+                if len(evs) != len(events):
+                    logger.warning(
+                        "Filtered reserved GA4 event names from historical payload date={} client_id={} session_id={} original_events={} outbound_events={}",
+                        current.isoformat(),
+                        u.client_id,
+                        sess.session_id,
+                        len(events),
+                        len(evs),
+                    )
+                payload = build_event_payload(client_id=u.client_id, user_id=u.user_id, events=evs, timestamp_micros=events[0].timestamp_micros)
+                if i < 3:
+                    logger.info(
+                        "Prepared historical payload {} date={} client_id={} session_id={} event_count={} first_event={}",
+                        i + 1,
+                        current.isoformat(),
+                        u.client_id,
+                        sess.session_id,
+                        len(events),
+                        events[0].name,
+                    )
+                if effective_dry_run:
+                    logger.info(
+                        "Dry-run historical payload date={} client_id={} session_id={} events={}",
+                        current.isoformat(),
+                        u.client_id,
+                        sess.session_id,
+                        len(events),
+                    )
                 else:
-                    await client.send(payload)
+                    resp = await client.send(payload)
+                    logger.info(
+                        "Sent historical payload date={} client_id={} session_id={} status_code={} endpoint={}",
+                        current.isoformat(),
+                        u.client_id,
+                        sess.session_id,
+                        resp.status_code,
+                        client._endpoint(),
+                    )
+                    if resp.status_code >= 400:
+                        logger.error(
+                            "GA4 returned error for historical payload date={} client_id={} session_id={} status_code={} body={}",
+                            current.isoformat(),
+                            u.client_id,
+                            sess.session_id,
+                            resp.status_code,
+                            resp.text,
+                        )
                 for e in events:
                     rows.append({
                         "client_id": u.client_id,

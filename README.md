@@ -33,11 +33,14 @@ python main.py preview
 python main.py daily --dry-run
 python main.py daily --date 2025-04-30 --dry-run
 python main.py historical --start 2025-01-01 --end 2025-01-03 --dry-run
+python main.py daily --no-dry-run --debug-view
 ```
 
 ## Notes
 
 - The current implementation is intentionally conservative: it prints sample payloads in dry-run mode and writes summary/CSV artifacts to `output/`.
+- Use `sending.use_debug_endpoint: true` when you want payload validation messages from GA4's `/debug/mp/collect` endpoint. The client logs any `validationMessages` returned by GA4.
+- Use `--debug-view` when you want events to hit the live collect endpoint with `debug_mode=1` so they can appear in GA4 DebugView.
 - Historical mode is meant for backfills. Events with timestamps older than the GA4 72-hour Measurement Protocol window may still land in BigQuery but not standard GA4 UI reports.
 - Do not commit `.env` or API secrets.
 

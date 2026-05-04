@@ -113,3 +113,4 @@ sending:
   requests_per_second: 5
   dry_run: false
   use_debug_endpoint: false
+  debug_view: false
